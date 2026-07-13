@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Performance Prediction System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="bg-decoration" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark">SP</span>
+      <span class="brand-name">Student Performance<br><strong>Prediction System</strong></span>
+    </a>
+    <nav class="nav-links">
+      <a href="#how-it-works">How it works</a>
+      <a href="#roles">Roles</a>
+      <a href="#about">About</a>
+    </nav>
+    <div class="topbar-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+      </button>
+      <a href="/login" class="btn btn-primary">Log in</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <p class="eyebrow">Weighted Scoring Algorithm · APU Final Year Project</p>
+        <h1>See performance coming,<br>before the report card does.</h1>
+        <p class="hero-sub">
+          Attendance, assignments, and exams don't carry equal weight — so your
+          predictions shouldn't either. Configure the weighting, and every
+          student is classified as a Top Performer, Average Performer, or At-Risk,
+          automatically.
+        </p>
+        <div class="hero-actions">
+          <a href="/login" class="btn btn-primary btn-lg">Log in to your dashboard</a>
+          <a href="#how-it-works" class="btn btn-ghost btn-lg">See how it works</a>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="mixer-card">
+          <p class="mixer-title">Try the weighting yourself</p>
+          <div class="slider-group">
+            <div class="slider-row">
+              <label for="attendanceRange">Attendance</label>
+              <span class="slider-value" id="attendanceVal">85</span>
+            </div>
+            <input type="range" id="attendanceRange" min="0" max="100" value="85" class="slider slider-attendance">
+
+            <div class="slider-row">
+              <label for="assignmentRange">Assignment</label>
+              <span class="slider-value" id="assignmentVal">70</span>
+            </div>
+            <input type="range" id="assignmentRange" min="0" max="100" value="70" class="slider slider-assignment">
+
+            <div class="slider-row">
+              <label for="examRange">Exam</label>
+              <span class="slider-value" id="examVal">60</span>
+            </div>
+            <input type="range" id="examRange" min="0" max="100" value="60" class="slider slider-exam">
+          </div>
+
+          <div class="weight-row">
+            <span>Weights: 20% · 30% · 50%</span>
+          </div>
+
+          <div class="gauge-wrap">
+            <svg viewBox="0 0 200 120" class="gauge">
+              <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-track" pathLength="100"/>
+              <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-fill" id="gaugeFill" pathLength="100"/>
+            </svg>
+            <div class="gauge-readout">
+              <span class="gauge-score" id="gaugeScore">68</span>
+              <span class="gauge-label" id="gaugeLabel">Average Performer</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="how-it-works" id="how-it-works">
+    <div class="section-inner">
+      <p class="eyebrow center">How it works</p>
+      <h2 class="section-title center">Three inputs. One weighted verdict.</h2>
+
+      <div class="steps">
+        <div class="step">
+          <span class="step-number">01</span>
+          <h3>Record the raw numbers</h3>
+          <p>Teachers log attendance percentage, assignment scores, and exam
+             scores for each student, every semester.</p>
+        </div>
+        <div class="step">
+          <span class="step-number">02</span>
+          <h3>Set the weighting</h3>
+          <p>Admins decide how much each factor should count — the weights
+             always add up to 100%, validated automatically.</p>
+        </div>
+        <div class="step">
+          <span class="step-number">03</span>
+          <h3>Get the prediction</h3>
+          <p>The system calculates a weighted score and classifies each
+             student — Top Performer, Average Performer, or At-Risk.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="roles" id="roles">
+    <div class="section-inner">
+      <p class="eyebrow center">Built for every role</p>
+      <h2 class="section-title center">One system, three logins.</h2>
+
+      <div class="role-cards">
+        <div class="role-card">
+          <div class="role-icon role-icon-admin">A</div>
+          <h3>Admin</h3>
+          <p>Manage teacher accounts, set the weight configuration, and view
+             institutional analytics across every class.</p>
+        </div>
+        <div class="role-card">
+          <div class="role-icon role-icon-teacher">T</div>
+          <h3>Teacher</h3>
+          <p>Manage your students, update their performance data, and view
+             a live class dashboard with predictions.</p>
+        </div>
+        <div class="role-card">
+          <div class="role-icon role-icon-student">S</div>
+          <h3>Student</h3>
+          <p>Check your own attendance, scores, and current standing —
+             no waiting for a report card.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-banner">
+    <div class="section-inner cta-inner">
+      <h2>Ready to see where you stand?</h2>
+      <a href="/login" class="btn btn-primary btn-lg">Log in now</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="section-inner footer-inner">
+    <span>Student Performance Prediction System</span>
+    <span class="footer-meta">Final Year Project · BSc (Hons) Information Technology · APU</span>
+  </div>
+</footer>
+
+<script src="/static/js/theme.js"></script>
+<script src="/static/js/home.js"></script>
+</body>
+</html>

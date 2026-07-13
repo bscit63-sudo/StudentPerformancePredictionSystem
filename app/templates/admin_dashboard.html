@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Student Performance Prediction System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body data-required-role="admin">
+<div class="dashboard">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-mark">SP</span>
+      <span class="brand-name">Student Performance<br><strong>Prediction System</strong></span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="sidebar-link active" data-section="section-overview"
+              data-title="Overview" data-subtitle="Institution-wide snapshot">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        Overview
+      </button>
+      <button class="sidebar-link" data-section="section-teachers"
+              data-title="Teachers" data-subtitle="Manage teacher accounts">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Teachers
+      </button>
+      <button class="sidebar-link" data-section="section-students"
+              data-title="Students" data-subtitle="Manage student accounts">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5-10-5Z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg>
+        Students
+      </button>
+      <button class="sidebar-link" data-section="section-weights"
+              data-title="Weight Configuration" data-subtitle="Set the scoring weights">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-7M4 10V3M12 21v-11M12 6V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></svg>
+        Weight Config
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="userName">Admin</div>
+          <div class="sidebar-user-role">Administrator</div>
+        </div>
+      </div>
+      <button class="logout-btn" id="logoutBtn">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+        Log out
+      </button>
+    </div>
+  </aside>
+
+  <div class="dashboard-main">
+    <header class="dashboard-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div>
+          <h1 class="page-title" id="pageTitle">Overview</h1>
+          <p class="page-subtitle" id="pageSubtitle">Institution-wide snapshot</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="dashboard-content">
+
+      <!-- ===== Overview ===== -->
+      <section class="dashboard-section active" id="section-overview">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-card-label">Total Teachers</div>
+            <div class="stat-card-value" id="statTeachers">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Total Students</div>
+            <div class="stat-card-value" id="statStudents">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Top Performers</div>
+            <div class="stat-card-value green" id="statTop">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">At-Risk Students</div>
+            <div class="stat-card-value coral" id="statAtRisk">—</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Performance distribution</h2>
+          </div>
+          <canvas id="distributionChart" height="90"></canvas>
+        </div>
+
+        <div class="panel">
+  <div class="panel-header">
+    <h2 class="panel-title">Current weight configuration</h2>
+  </div>
+  <p id="currentWeightsSummary" class="empty-state">Loading...</p>
+</div>
+        <div class="panel">
+  <div class="panel-header">
+    <h2 class="panel-title">Reports</h2>
+  </div>
+  <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+    <button class="btn btn-ghost btn-sm" id="exportSummaryBtn">Export Summary CSV</button>
+    <button class="btn btn-ghost btn-sm" id="exportFullBtn">Export Full CSV</button>
+  </div>
+</div>
+      </section>
+
+      <!-- ===== Teachers ===== -->
+      <section class="dashboard-section" id="section-teachers">
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Add a teacher</h2>
+          </div>
+          <form id="addTeacherForm">
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="teacherName">Full name</label>
+                <input type="text" id="teacherName" required>
+              </div>
+              <div class="form-field">
+                <label for="teacherEmail">Email</label>
+                <input type="email" id="teacherEmail" required>
+              </div>
+              <div class="form-field">
+                <label for="teacherDept">Department</label>
+                <input type="text" id="teacherDept" required>
+              </div>
+              <div class="form-field">
+                <label for="teacherPassword">Temporary password</label>
+                <input type="text" id="teacherPassword" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Add teacher</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">All teachers</h2>
+          </div>
+<table class="data-table">
+  <thead>
+    <tr><th>Name</th><th>Email</th><th>Department</th><th></th></tr>
+  </thead>
+  <tbody id="teachersTableBody">
+    <tr><td colspan="4" class="empty-state">Loading...</td></tr>
+  </tbody>
+</table>
+        </div>
+      </section>
+
+      <!-- ===== Students ===== -->
+      <section class="dashboard-section" id="section-students">
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Add a student</h2>
+          </div>
+          <form id="addStudentForm">
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="studentName">Full name</label>
+                <input type="text" id="studentName" required>
+              </div>
+              <div class="form-field">
+                <label for="studentEmail">Email</label>
+                <input type="email" id="studentEmail" required>
+              </div>
+              <div class="form-field">
+                <label for="studentProgram">Program</label>
+                <input type="text" id="studentProgram" placeholder="BSc IT" required>
+              </div>
+              <div class="form-field">
+                <label for="studentSemester">Semester</label>
+                <input type="number" id="studentSemester" min="1" max="12" required>
+              </div>
+              <div class="form-field">
+                <label for="studentTeacher">Assigned teacher</label>
+                <select id="studentTeacher" required></select>
+              </div>
+              <div class="form-field">
+                <label for="studentPassword">Temporary password</label>
+                <input type="text" id="studentPassword" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Add student</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">All students</h2>
+          </div>
+          <table class="data-table">
+  <thead>
+    <tr><th>Name</th><th>Program</th><th>Semester</th><th>Email</th><th></th></tr>
+  </thead>
+  <tbody id="studentsTableBody">
+    <tr><td colspan="5" class="empty-state">Loading...</td></tr>
+  </tbody>
+</table>
+        </div>
+      </section>
+
+      <!-- ===== Weight Config ===== -->
+      <section class="dashboard-section" id="section-weights">
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Set weight configuration</h2>
+          </div>
+          <p class="page-subtitle" style="margin-bottom: 18px;">
+            Weights must add up to 1.0 (e.g. 0.2 + 0.3 + 0.5). This becomes the active
+            configuration used for every new performance record.
+          </p>
+          <form id="weightConfigForm">
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="weightAttendance">Attendance weight</label>
+                <input type="number" id="weightAttendance" min="0" max="1" step="0.01" required>
+              </div>
+              <div class="form-field">
+                <label for="weightAssignment">Assignment weight</label>
+                <input type="number" id="weightAssignment" min="0" max="1" step="0.01" required>
+              </div>
+              <div class="form-field">
+                <label for="weightExam">Exam weight</label>
+                <input type="number" id="weightExam" min="0" max="1" step="0.01" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Save configuration</button>
+          </form>
+        </div>
+      </section>
+
+   </div>
+  </div>
+</div>
+
+<!-- ===== Edit Teacher Modal ===== -->
+<div class="modal-overlay" id="editTeacherModalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit teacher</h3>
+      <button class="modal-close" id="editTeacherModalClose">✕</button>
+    </div>
+    <form id="editTeacherForm">
+      <input type="hidden" id="editTeacherId">
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="editTeacherName">Full name</label>
+          <input type="text" id="editTeacherName" required>
+        </div>
+        <div class="form-field">
+          <label for="editTeacherEmail">Email</label>
+          <input type="email" id="editTeacherEmail" required>
+        </div>
+        <div class="form-field">
+          <label for="editTeacherDept">Department</label>
+          <input type="text" id="editTeacherDept" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Update teacher</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Edit Student Modal ===== -->
+<div class="modal-overlay" id="editStudentModalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit student</h3>
+      <button class="modal-close" id="editStudentModalClose">✕</button>
+    </div>
+    <form id="editStudentForm">
+      <input type="hidden" id="editStudentId">
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="editStudentName">Full name</label>
+          <input type="text" id="editStudentName" required>
+        </div>
+        <div class="form-field">
+          <label for="editStudentEmail">Email</label>
+          <input type="email" id="editStudentEmail" required>
+        </div>
+        <div class="form-field">
+          <label for="editStudentProgram">Program</label>
+          <input type="text" id="editStudentProgram" required>
+        </div>
+        <div class="form-field">
+          <label for="editStudentSemester">Semester</label>
+          <input type="number" id="editStudentSemester" min="1" max="12" required>
+        </div>
+        <div class="form-field">
+          <label for="editStudentTeacher">Assigned teacher</label>
+          <select id="editStudentTeacher" required></select>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Update student</button>
+    </form>
+  </div>
+</div>
+
+<script src="/static/js/theme.js"></script>
+<script src="/static/js/dashboard-common.js"></script>
+<script src="/static/js/admin_dashboard.js"></script>
+</body>
+</html>
