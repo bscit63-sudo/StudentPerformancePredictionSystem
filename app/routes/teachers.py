@@ -97,3 +97,40 @@ async def delete_teacher(
 
     await teachers_collection.delete_one({"_id": ObjectId(teacher_id)})
     return {"detail": "Teacher deleted successfully"}
+
+from app.models.auth_common import ChangePasswordRequest
+
+@router.get("/me/profile", response_model=TeacherOut)
+async def get_my_teacher_profile(current_user: dict = Depends(require_role("teacher"))):
+    teacher = await teachers_collection.find_one({"_id": ObjectId(current_user["user_id"])})
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+    return serialize_document(teacher)
+
+
+@router.put("/me/profile", response_model=TeacherOut)
+async def update_my_teacher_profile(
+    update: dict,
+    current_user: dict = Depends(require_role("teacher")),
+):
+    allowed = {k: v for k, v in update.items() if k in ("name", "email") and v}
+    if allowed:
+        await teachers_collection.update_one({"_id": ObjectId(current_user["user_id"])}, {"$set": allowed})
+    teacher = await teachers_collection.find_one({"_id": ObjectId(current_user["user_id"])})
+    return serialize_document(teacher)
+
+
+@router.post("/change-password")
+async def change_teacher_password(
+    payload: ChangePasswordRequest,
+    current_user: dict = Depends(require_role("teacher")),
+):
+    teacher = await teachers_collection.find_one({"_id": ObjectId(current_user["user_id"])})
+    if not teacher or not verify_password(payload.current_password, teacher["hashed_password"]):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+    await teachers_collection.update_one(
+        {"_id": ObjectId(current_user["user_id"])},
+        {"$set": {"hashed_password": hash_password(payload.new_password)}},
+    )
+    return {"detail": "Password updated successfully"}

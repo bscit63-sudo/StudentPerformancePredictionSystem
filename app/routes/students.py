@@ -130,3 +130,32 @@ async def delete_student(
 
     await students_collection.delete_one({"_id": ObjectId(student_id)})
     return {"detail": "Student deleted successfully"}
+
+from app.models.auth_common import ChangePasswordRequest
+
+@router.put("/me/profile", response_model=StudentOut)
+async def update_my_student_profile(
+    update: dict,
+    current_user: dict = Depends(require_role("student")),
+):
+    allowed = {k: v for k, v in update.items() if k in ("name", "email") and v}
+    if allowed:
+        await students_collection.update_one({"_id": ObjectId(current_user["user_id"])}, {"$set": allowed})
+    student = await students_collection.find_one({"_id": ObjectId(current_user["user_id"])})
+    return serialize_document(student)
+
+
+@router.post("/change-password")
+async def change_student_password(
+    payload: ChangePasswordRequest,
+    current_user: dict = Depends(require_role("student")),
+):
+    student = await students_collection.find_one({"_id": ObjectId(current_user["user_id"])})
+    if not student or not verify_password(payload.current_password, student["hashed_password"]):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+    await students_collection.update_one(
+        {"_id": ObjectId(current_user["user_id"])},
+        {"$set": {"hashed_password": hash_password(payload.new_password)}},
+    )
+    return {"detail": "Password updated successfully"}

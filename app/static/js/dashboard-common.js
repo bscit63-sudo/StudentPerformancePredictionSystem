@@ -55,14 +55,40 @@ document.addEventListener("DOMContentLoaded", () => {
       const subtitleEl = document.getElementById("pageSubtitle");
       if (titleEl) titleEl.textContent = link.dataset.title || link.textContent.trim();
       if (subtitleEl) subtitleEl.textContent = link.dataset.subtitle || "";
+
+      closeMobileSidebar();
     });
   });
 
-  // Mobile sidebar toggle
+  // Mobile sidebar toggle + backdrop
   const menuToggle = document.getElementById("menuToggle");
   const sidebar = document.querySelector(".sidebar");
+
+  let sidebarBackdrop = document.querySelector(".sidebar-backdrop");
+  if (!sidebarBackdrop && sidebar) {
+    sidebarBackdrop = document.createElement("div");
+    sidebarBackdrop.className = "sidebar-backdrop";
+    document.body.appendChild(sidebarBackdrop);
+  }
+
+  function openMobileSidebar() {
+    if (sidebar) sidebar.classList.add("open");
+    if (sidebarBackdrop) sidebarBackdrop.classList.add("open");
+  }
+
+  function closeMobileSidebar() {
+    if (sidebar) sidebar.classList.remove("open");
+    if (sidebarBackdrop) sidebarBackdrop.classList.remove("open");
+  }
+
   if (menuToggle && sidebar) {
-    menuToggle.addEventListener("click", () => sidebar.classList.toggle("open"));
+    menuToggle.addEventListener("click", () => {
+      sidebar.classList.contains("open") ? closeMobileSidebar() : openMobileSidebar();
+    });
+  }
+
+  if (sidebarBackdrop) {
+    sidebarBackdrop.addEventListener("click", closeMobileSidebar);
   }
 });
 

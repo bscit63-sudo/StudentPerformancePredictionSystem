@@ -466,3 +466,26 @@
 }
 .attendance-btn.present.active { background: var(--accent-green); color: white; }
 .attendance-btn.absent.active { background: var(--accent-coral); color: white; }
+/* ---------- Mobile sidebar backdrop ---------- */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 15, 31, 0.5);
+  z-index: 55;
+}
+.sidebar-backdrop.open { display: block; }
+
+@media (min-width: 901px) {
+  .sidebar-backdrop { display: none !important; }
+}
+/* ---------- Profile form ---------- */
+.profile-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 500px;
+}
+@media (max-width: 600px) {
+  .profile-form-grid { grid-template-columns: 1fr; }
+}

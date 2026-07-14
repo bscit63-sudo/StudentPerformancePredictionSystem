@@ -162,3 +162,44 @@ async function loadAttendanceHistory() {
 }
 
 loadAttendanceHistory();
+// ---------- My Profile ----------
+async function loadMyProfile() {
+  const res = await apiFetch("/students/me/profile");
+  if (!res || !res.ok) return;
+  const student = await res.json();
+  document.getElementById("profileName").value = student.name;
+  document.getElementById("profileEmail").value = student.email;
+}
+
+document.getElementById("profileForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const body = {
+    name: document.getElementById("profileName").value.trim(),
+    email: document.getElementById("profileEmail").value.trim(),
+  };
+  const res = await apiFetch("/students/me/profile", { method: "PUT", body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) {
+    showToast(data.detail || "Could not update profile.", "error");
+    return;
+  }
+  showToast("Profile updated.");
+});
+
+document.getElementById("passwordForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const body = {
+    current_password: document.getElementById("currentPassword").value,
+    new_password: document.getElementById("newPassword").value,
+  };
+  const res = await apiFetch("/students/change-password", { method: "POST", body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) {
+    showToast(data.detail || "Could not update password.", "error");
+    return;
+  }
+  showToast("Password updated.");
+  e.target.reset();
+});
+
+loadMyProfile();

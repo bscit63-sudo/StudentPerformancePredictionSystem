@@ -301,4 +301,46 @@ document.getElementById("exportFullBtn").addEventListener("click", () => {
 });
 (async function init() {
   await Promise.all([loadTeachers(), loadStudents(), loadWeightConfigSummary(), loadOverview()]);
+
 })();
+// ---------- My Profile ----------
+async function loadMyProfile() {
+  const res = await apiFetch("/auth/admin/me/profile");
+  if (!res || !res.ok) return;
+  const admin = await res.json();
+  document.getElementById("profileUsername").value = admin.username;
+  document.getElementById("profileEmail").value = admin.email;
+}
+
+document.getElementById("profileForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const body = {
+    username: document.getElementById("profileUsername").value.trim(),
+    email: document.getElementById("profileEmail").value.trim(),
+  };
+  const res = await apiFetch("/auth/admin/me/profile", { method: "PUT", body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) {
+    showToast(data.detail || "Could not update profile.", "error");
+    return;
+  }
+  showToast("Profile updated.");
+});
+
+document.getElementById("passwordForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const body = {
+    current_password: document.getElementById("currentPassword").value,
+    new_password: document.getElementById("newPassword").value,
+  };
+  const res = await apiFetch("/auth/admin/change-password", { method: "POST", body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) {
+    showToast(data.detail || "Could not update password.", "error");
+    return;
+  }
+  showToast("Password updated.");
+  e.target.reset();
+});
+
+loadMyProfile();
