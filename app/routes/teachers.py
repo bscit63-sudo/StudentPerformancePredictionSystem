@@ -113,7 +113,7 @@ async def update_my_teacher_profile(
     update: dict,
     current_user: dict = Depends(require_role("teacher")),
 ):
-    allowed = {k: v for k, v in update.items() if k in ("name", "email") and v}
+    allowed = {k: v for k, v in update.items() if k in ("name", "email", "phone_number") and v is not None}
     if allowed:
         await teachers_collection.update_one({"_id": ObjectId(current_user["user_id"])}, {"$set": allowed})
     teacher = await teachers_collection.find_one({"_id": ObjectId(current_user["user_id"])})

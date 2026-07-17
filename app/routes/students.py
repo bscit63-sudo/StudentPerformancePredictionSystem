@@ -3,12 +3,28 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from bson import ObjectId
 from pydantic import BaseModel
 
-from app.database import students_collection
-from app.models.student import StudentCreate, StudentOut
+from app.database import students_collection, courses_collection
+from app.models.student import StudentCreate, StudentOut, StudentUpdate
 from app.models.utils import serialize_document, serialize_documents
-from app.security import hash_password, verify_password, create_access_token, require_role, get_current_user
+from app.security import hash_password, verify_password, create_access_token, require_role
+from app.models.auth_common import ChangePasswordRequest
 
 router = APIRouter(prefix="/students", tags=["students"])
+
+
+async def _attach_course_name(student_dict: dict) -> dict:
+    """Looks up the course name for display, without changing what's stored."""
+    course_id = student_dict.get("course_id")
+    if course_id:
+        course = await courses_collection.find_one({"_id": ObjectId(course_id)})
+        student_dict["course_name"] = course["course_name"] if course else None
+    else:
+        student_dict["course_name"] = None
+    return student_dict
+
+
+async def _attach_course_names(student_dicts: list[dict]) -> list[dict]:
+    return [await _attach_course_name(s) for s in student_dicts]
 
 
 @router.post("/", response_model=StudentOut)
@@ -23,23 +39,26 @@ async def create_student(
     doc = {
         "name": student.name,
         "email": student.email,
-        "program": student.program,
         "semester": student.semester,
         "teacher_id": student.teacher_id,
+        "phone_number": student.phone_number,
+        "course_id": student.course_id,
+        "program": student.program,
         "hashed_password": hash_password(student.password),
         "created_at": datetime.utcnow(),
     }
     result = await students_collection.insert_one(doc)
     created = await students_collection.find_one({"_id": result.inserted_id})
-    return serialize_document(created)
+    return await _attach_course_name(serialize_document(created))
+
 
 @router.get("/me/profile", response_model=StudentOut)
 async def get_my_profile(current_user: dict = Depends(require_role("student"))):
-    """A logged-in student fetches their own profile without needing to know their ID."""
     student = await students_collection.find_one({"_id": ObjectId(current_user["user_id"])})
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
-    return serialize_document(student)
+    return await _attach_course_name(serialize_document(student))
+
 
 @router.get("/", response_model=list[StudentOut])
 async def list_students(current_user: dict = Depends(require_role("admin", "teacher"))):
@@ -53,7 +72,7 @@ async def list_students(current_user: dict = Depends(require_role("admin", "teac
         ).to_list(length=None)
     else:
         students = await students_collection.find().to_list(length=None)
-    return serialize_documents(students)
+    return await _attach_course_names(serialize_documents(students))
 
 
 @router.get("/{student_id}", response_model=StudentOut)
@@ -61,19 +80,13 @@ async def get_student(
     student_id: str,
     current_user: dict = Depends(require_role("admin", "teacher", "student")),
 ):
-    """
-    Admins/teachers can view any student (teachers should ideally only view
-    their own - enforced on the list endpoint; this single-get is left open
-    for now since a teacher looking up one ID they don't own is low-risk).
-    Students can only view themselves.
-    """
     if current_user["role"] == "student" and current_user["user_id"] != student_id:
         raise HTTPException(status_code=403, detail="You can only view your own profile")
 
     student = await students_collection.find_one({"_id": ObjectId(student_id)})
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
-    return serialize_document(student)
+    return await _attach_course_name(serialize_document(student))
 
 
 class LoginRequest(BaseModel):
@@ -93,7 +106,6 @@ async def login_student(credentials: LoginRequest):
     token = create_access_token(data={"sub": str(student["_id"]), "role": "student"})
     return {"access_token": token, "token_type": "bearer"}
 
-from app.models.student import StudentUpdate
 
 @router.put("/{student_id}", response_model=StudentOut)
 async def update_student(
@@ -113,7 +125,7 @@ async def update_student(
         await students_collection.update_one({"_id": ObjectId(student_id)}, {"$set": update_data})
 
     updated = await students_collection.find_one({"_id": ObjectId(student_id)})
-    return serialize_document(updated)
+    return await _attach_course_name(serialize_document(updated))
 
 
 @router.delete("/{student_id}")
@@ -131,18 +143,17 @@ async def delete_student(
     await students_collection.delete_one({"_id": ObjectId(student_id)})
     return {"detail": "Student deleted successfully"}
 
-from app.models.auth_common import ChangePasswordRequest
 
 @router.put("/me/profile", response_model=StudentOut)
 async def update_my_student_profile(
     update: dict,
     current_user: dict = Depends(require_role("student")),
 ):
-    allowed = {k: v for k, v in update.items() if k in ("name", "email") and v}
+    allowed = {k: v for k, v in update.items() if k in ("name", "email", "phone_number") and v is not None}
     if allowed:
         await students_collection.update_one({"_id": ObjectId(current_user["user_id"])}, {"$set": allowed})
     student = await students_collection.find_one({"_id": ObjectId(current_user["user_id"])})
-    return serialize_document(student)
+    return await _attach_course_name(serialize_document(student))
 
 
 @router.post("/change-password")

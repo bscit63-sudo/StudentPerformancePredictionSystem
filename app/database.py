@@ -12,7 +12,8 @@ performance_records_collection = db["performance_records"]
 weight_configs_collection = db["weight_configs"]
 performance_scores_collection = db["performance_scores"]
 attendance_logs_collection = db["attendance_logs"]
-
+courses_collection = db["courses"]
+departments_collection = db["departments"]
 async def ping_database() -> bool:
     try:
         await client.admin.command("ping")

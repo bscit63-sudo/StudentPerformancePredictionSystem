@@ -1,5 +1,6 @@
 let allTeachers = [];
 let allStudents = [];
+let allCourses = [];
 let distributionChartInstance = null;
 
 async function loadOverview() {
@@ -54,6 +55,22 @@ async function loadWeightConfigSummary() {
   document.getElementById("weightExam").value = config.exam_weight;
 }
 
+function populateTeacherSelects() {
+  const options = allTeachers.map((t) => `<option value="${t.id}">${t.name}</option>`).join("");
+  document.getElementById("studentTeacher").innerHTML = options;
+  document.getElementById("editStudentTeacher").innerHTML = options;
+
+  const withNone = `<option value="">— None —</option>` + options;
+  document.getElementById("courseTeacher").innerHTML = withNone;
+  document.getElementById("editCourseTeacher").innerHTML = withNone;
+}
+
+function populateCourseMultiSelects() {
+  const options = allCourses.map((c) => `<option value="${c.id}">${c.course_name}</option>`).join("");
+  document.getElementById("teacherCourses").innerHTML = options;
+  document.getElementById("editTeacherCourses").innerHTML = options;
+}
+
 async function loadTeachers() {
   const res = await apiFetch("/teachers/");
   allTeachers = res && res.ok ? await res.json() : [];
@@ -84,13 +101,120 @@ async function loadTeachers() {
     btn.addEventListener("click", () => deleteTeacher(btn.dataset.deleteTeacher));
   });
 
-  const select = document.getElementById("studentTeacher");
-  select.innerHTML = allTeachers.map((t) => `<option value="${t.id}">${t.name}</option>`).join("");
-
-  const editSelect = document.getElementById("editStudentTeacher");
-  editSelect.innerHTML = allTeachers.map((t) => `<option value="${t.id}">${t.name}</option>`).join("");
+  populateTeacherSelects();
 }
 
+// ---------- Courses ----------
+async function loadCourses() {
+  const res = await apiFetch("/courses/");
+  allCourses = res && res.ok ? await res.json() : [];
+
+  const tbody = document.getElementById("coursesTableBody");
+  if (allCourses.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="empty-state">No courses yet. Add one above.</td></tr>`;
+  } else {
+    tbody.innerHTML = allCourses.map((c) => {
+      const teacher = allTeachers.find((t) => t.id === c.teacher_id);
+      return `
+        <tr>
+          <td>${c.course_name}</td>
+          <td>${c.course_code || "—"}</td>
+          <td>${teacher ? teacher.name : "Unassigned"}</td>
+          <td>
+            <button class="action-link" data-edit-course='${JSON.stringify(c)}'>Edit</button>
+            <button class="action-link danger" data-delete-course="${c.id}">Delete</button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  document.querySelectorAll(".action-link[data-edit-course]").forEach((btn) => {
+    btn.addEventListener("click", () => openEditCourseModal(JSON.parse(btn.dataset.editCourse)));
+  });
+  document.querySelectorAll(".action-link[data-delete-course]").forEach((btn) => {
+    btn.addEventListener("click", () => deleteCourse(btn.dataset.deleteCourse));
+  });
+
+  const courseOptions = `<option value="">Select a course</option>` +
+    allCourses.map((c) => `<option value="${c.id}">${c.course_name}</option>`).join("");
+  document.getElementById("studentCourse").innerHTML = courseOptions;
+  document.getElementById("editStudentCourse").innerHTML = courseOptions;
+
+  populateCourseMultiSelects();
+}
+
+document.getElementById("addCourseForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const body = {
+    course_name: document.getElementById("courseName").value.trim(),
+    course_code: document.getElementById("courseCode").value.trim() || null,
+    teacher_id: document.getElementById("courseTeacher").value || null,
+  };
+  const res = await apiFetch("/courses/", { method: "POST", body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) {
+    showToast(data.detail || "Could not add course.", "error");
+    return;
+  }
+  showToast(`Course "${data.course_name}" added.`);
+  e.target.reset();
+  await loadCourses();
+});
+
+const editCourseModalOverlay = document.getElementById("editCourseModalOverlay");
+const editCourseForm = document.getElementById("editCourseForm");
+
+function openEditCourseModal(course) {
+  document.getElementById("editCourseId").value = course.id;
+  document.getElementById("editCourseName").value = course.course_name;
+  document.getElementById("editCourseCode").value = course.course_code || "";
+  document.getElementById("editCourseTeacher").value = course.teacher_id || "";
+  editCourseModalOverlay.classList.add("open");
+}
+
+function closeEditCourseModal() {
+  editCourseModalOverlay.classList.remove("open");
+}
+
+document.getElementById("editCourseModalClose").addEventListener("click", closeEditCourseModal);
+editCourseModalOverlay.addEventListener("click", (e) => {
+  if (e.target === editCourseModalOverlay) closeEditCourseModal();
+});
+
+editCourseForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const courseId = document.getElementById("editCourseId").value;
+  const body = {
+    course_name: document.getElementById("editCourseName").value.trim(),
+    course_code: document.getElementById("editCourseCode").value.trim() || null,
+    teacher_id: document.getElementById("editCourseTeacher").value || null,
+  };
+  const res = await apiFetch(`/courses/${courseId}`, { method: "PUT", body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) {
+    showToast(data.detail || "Could not update course.", "error");
+    return;
+  }
+  showToast("Course updated.");
+  closeEditCourseModal();
+  await loadCourses();
+});
+
+async function deleteCourse(courseId) {
+  if (!confirm("Delete this course? This is blocked if any students are still enrolled in it.")) return;
+
+  const res = await apiFetch(`/courses/${courseId}`, { method: "DELETE" });
+  if (!res.ok) {
+    const data = await res.json();
+    showToast(data.detail || "Could not delete course.", "error");
+    return;
+  }
+  showToast("Course deleted.");
+  await loadCourses();
+}
+
+// ---------- Students ----------
 async function loadStudents() {
   const res = await apiFetch("/students/");
   allStudents = res && res.ok ? await res.json() : [];
@@ -104,7 +228,7 @@ async function loadStudents() {
     tbody.innerHTML = allStudents.map((s) => `
       <tr>
         <td>${s.name}</td>
-        <td>${s.program}</td>
+        <td>${s.course_name || "—"}</td>
         <td>${s.semester}</td>
         <td>${s.email}</td>
         <td>
@@ -137,9 +261,16 @@ document.getElementById("addTeacherForm").addEventListener("submit", async (e) =
     showToast(data.detail || "Could not add teacher.", "error");
     return;
   }
+
+  const selectedCourseIds = getCheckedCourseIds("teacherCoursesChecklist");
+  for (const courseId of selectedCourseIds) {
+    await apiFetch(`/courses/${courseId}`, { method: "PUT", body: JSON.stringify({ teacher_id: data.id }) });
+  }
+
   showToast(`Teacher "${data.name}" added.`);
   e.target.reset();
   await loadTeachers();
+  await loadCourses();
 });
 
 const editTeacherModalOverlay = document.getElementById("editTeacherModalOverlay");
@@ -150,6 +281,10 @@ function openEditTeacherModal(teacher) {
   document.getElementById("editTeacherName").value = teacher.name;
   document.getElementById("editTeacherEmail").value = teacher.email;
   document.getElementById("editTeacherDept").value = teacher.department;
+
+  const currentlyAssignedCourseIds = allCourses.filter((c) => c.teacher_id === teacher.id).map((c) => c.id);
+  renderCourseChecklist("editTeacherCoursesChecklist", currentlyAssignedCourseIds);
+
   editTeacherModalOverlay.classList.add("open");
 }
 
@@ -176,9 +311,23 @@ editTeacherForm.addEventListener("submit", async (e) => {
     showToast(data.detail || "Could not update teacher.", "error");
     return;
   }
+
+  const selectedCourseIds = new Set(getCheckedCourseIds("editTeacherCoursesChecklist"));
+
+  for (const course of allCourses) {
+    const shouldBeAssigned = selectedCourseIds.has(course.id);
+    const isCurrentlyAssigned = course.teacher_id === teacherId;
+    if (shouldBeAssigned && !isCurrentlyAssigned) {
+      await apiFetch(`/courses/${course.id}`, { method: "PUT", body: JSON.stringify({ teacher_id: teacherId }) });
+    } else if (!shouldBeAssigned && isCurrentlyAssigned) {
+      await apiFetch(`/courses/${course.id}`, { method: "PUT", body: JSON.stringify({ teacher_id: null }) });
+    }
+  }
+
   showToast("Teacher updated.");
   closeEditTeacherModal();
   await loadTeachers();
+  await loadCourses();
 });
 
 async function deleteTeacher(teacherId) {
@@ -199,7 +348,7 @@ document.getElementById("addStudentForm").addEventListener("submit", async (e) =
   const body = {
     name: document.getElementById("studentName").value.trim(),
     email: document.getElementById("studentEmail").value.trim(),
-    program: document.getElementById("studentProgram").value.trim(),
+    course_id: document.getElementById("studentCourse").value,
     semester: Number(document.getElementById("studentSemester").value),
     teacher_id: document.getElementById("studentTeacher").value,
     password: document.getElementById("studentPassword").value,
@@ -222,7 +371,7 @@ function openEditStudentModal(student) {
   document.getElementById("editStudentId").value = student.id;
   document.getElementById("editStudentName").value = student.name;
   document.getElementById("editStudentEmail").value = student.email;
-  document.getElementById("editStudentProgram").value = student.program;
+  document.getElementById("editStudentCourse").value = student.course_id || "";
   document.getElementById("editStudentSemester").value = student.semester;
   document.getElementById("editStudentTeacher").value = student.teacher_id;
   editStudentModalOverlay.classList.add("open");
@@ -243,7 +392,7 @@ editStudentForm.addEventListener("submit", async (e) => {
   const body = {
     name: document.getElementById("editStudentName").value.trim(),
     email: document.getElementById("editStudentEmail").value.trim(),
-    program: document.getElementById("editStudentProgram").value.trim(),
+    course_id: document.getElementById("editStudentCourse").value,
     semester: Number(document.getElementById("editStudentSemester").value),
     teacher_id: document.getElementById("editStudentTeacher").value,
   };
@@ -292,6 +441,7 @@ document.getElementById("weightConfigForm").addEventListener("submit", async (e)
   showToast("Weight configuration updated.");
   await loadWeightConfigSummary();
 });
+
 document.getElementById("exportSummaryBtn").addEventListener("click", () => {
   downloadCSV("/reports/summary.csv", "summary_report.csv");
 });
@@ -299,24 +449,52 @@ document.getElementById("exportSummaryBtn").addEventListener("click", () => {
 document.getElementById("exportFullBtn").addEventListener("click", () => {
   downloadCSV("/reports/full.csv", "full_report.csv");
 });
-(async function init() {
-  await Promise.all([loadTeachers(), loadStudents(), loadWeightConfigSummary(), loadOverview()]);
 
-})();
 // ---------- My Profile ----------
+let currentProfile = null;
+
+function renderProfileDisplay() {
+  if (!currentProfile) return;
+  document.getElementById("profileAvatarInitial").textContent = currentProfile.username.charAt(0).toUpperCase();
+  document.getElementById("profileDisplayName").textContent = currentProfile.username;
+  document.getElementById("profileDisplayEmail").textContent = currentProfile.email;
+
+  const phoneEl = document.getElementById("profileDisplayPhone");
+  if (currentProfile.phone_number) {
+    phoneEl.textContent = currentProfile.phone_number;
+    phoneEl.classList.remove("empty");
+  } else {
+    phoneEl.textContent = "Not provided";
+    phoneEl.classList.add("empty");
+  }
+}
+
 async function loadMyProfile() {
   const res = await apiFetch("/auth/admin/me/profile");
   if (!res || !res.ok) return;
-  const admin = await res.json();
-  document.getElementById("profileUsername").value = admin.username;
-  document.getElementById("profileEmail").value = admin.email;
+  currentProfile = await res.json();
+  renderProfileDisplay();
 }
+
+document.getElementById("editProfileBtn").addEventListener("click", () => {
+  document.getElementById("profileUsername").value = currentProfile.username;
+  document.getElementById("profileEmail").value = currentProfile.email;
+  document.getElementById("profilePhone").value = currentProfile.phone_number || "";
+  document.getElementById("profileDisplayCard").style.display = "none";
+  document.getElementById("profileEditPanel").style.display = "block";
+});
+
+document.getElementById("cancelEditBtn").addEventListener("click", () => {
+  document.getElementById("profileEditPanel").style.display = "none";
+  document.getElementById("profileDisplayCard").style.display = "block";
+});
 
 document.getElementById("profileForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const body = {
     username: document.getElementById("profileUsername").value.trim(),
     email: document.getElementById("profileEmail").value.trim(),
+    phone_number: document.getElementById("profilePhone").value.trim() || null,
   };
   const res = await apiFetch("/auth/admin/me/profile", { method: "PUT", body: JSON.stringify(body) });
   const data = await res.json();
@@ -324,7 +502,11 @@ document.getElementById("profileForm").addEventListener("submit", async (e) => {
     showToast(data.detail || "Could not update profile.", "error");
     return;
   }
+  currentProfile = data;
+  renderProfileDisplay();
   showToast("Profile updated.");
+  document.getElementById("profileEditPanel").style.display = "none";
+  document.getElementById("profileDisplayCard").style.display = "block";
 });
 
 document.getElementById("passwordForm").addEventListener("submit", async (e) => {
@@ -343,4 +525,11 @@ document.getElementById("passwordForm").addEventListener("submit", async (e) => 
   e.target.reset();
 });
 
-loadMyProfile();
+(async function init() {
+  await loadTeachers();
+  await loadCourses();
+  await loadStudents();
+  await loadWeightConfigSummary();
+  await loadOverview();
+  await loadMyProfile();
+})();

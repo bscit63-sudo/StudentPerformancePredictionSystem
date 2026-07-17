@@ -5,18 +5,16 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import ping_database
-from app.routes import auth, teachers, students, weight_configs, performance_records, performance_scores, reports, attendance
+from app.routes import auth, teachers, students, weight_configs, performance_records, performance_scores, reports, attendance, courses, departments
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     connected = await ping_database()
     print("Connected to MongoDB!" if connected else "FAILED to connect to MongoDB.")
     yield
-
 app = FastAPI(lifespan=lifespan)
 
 # Serve CSS/JS files from app/static at the URL path /static
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
 # Set up Jinja2 to render HTML files from app/templates
 templates = Jinja2Templates(directory="app/templates")
 
@@ -52,6 +50,8 @@ app.include_router(performance_records.router)
 app.include_router(performance_scores.router)
 app.include_router(reports.router)
 app.include_router(attendance.router)
+app.include_router(courses.router)
+app.include_router(departments.router)
 
 @app.get("/health")
 async def health_check():

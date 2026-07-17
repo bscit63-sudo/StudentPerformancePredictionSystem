@@ -135,12 +135,14 @@
           <input type="email" id="studentEmail" required>
         </div>
         <div class="form-field">
-          <label for="studentProgram">Program</label>
-          <input type="text" id="studentProgram" placeholder="BSc IT" required>
-        </div>
+  <label for="studentCourse">Course</label>
+  <select id="studentCourse" required>
+    <option value="">Select a course</option>
+  </select>
+</div>
         <div class="form-field">
           <label for="studentSemester">Semester</label>
-          <input type="number" id="studentSemester" min="1" max="12" required>
+          <input type="number" id="studentSemester" min="1" max="10" required>
         </div>
         <div class="form-field">
           <label for="studentPassword">Temporary password</label>
@@ -158,7 +160,7 @@
     <table class="data-table">            <thead>
               <tr>
                 <th>Name</th>
-                <th>Program</th>
+                <th>Course</th>
                 <th>Semester</th>
                 <th>Latest score</th>
                 <th>Category</th>
@@ -184,7 +186,7 @@
           </div>
           <table class="data-table">
             <thead>
-              <tr><th>Name</th><th>Program</th><th>Status</th></tr>
+              <tr><th>Name</th><th>Course</th><th>Status</th></tr>
             </thead>
             <tbody id="attendanceTableBody">
               <tr><td colspan="3" class="empty-state">Loading...</td></tr>

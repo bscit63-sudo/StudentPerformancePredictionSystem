@@ -66,7 +66,7 @@ async def update_my_admin_profile(
     update: dict,
     current_user: dict = Depends(get_current_user),
 ):
-    allowed = {k: v for k, v in update.items() if k in ("username", "email") and v}
+    allowed = {k: v for k, v in update.items() if k in ("username", "email", "phone_number") and v is not None}
     if allowed:
         await admins_collection.update_one({"_id": ObjectId(current_user["user_id"])}, {"$set": allowed})
     admin = await admins_collection.find_one({"_id": ObjectId(current_user["user_id"])})

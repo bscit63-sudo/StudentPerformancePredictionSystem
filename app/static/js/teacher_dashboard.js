@@ -3,6 +3,15 @@ let latestScoreByStudent = {};
 let distributionChartInstance = null;
 let myTeacherId = null;
 let currentHistoryStudent = { id: null, name: null };
+let myCourses = [];
+
+async function loadCourses() {
+  const res = await apiFetch("/courses/");
+  myCourses = res && res.ok ? await res.json() : [];
+  const options = `<option value="">Select a course</option>` +
+    myCourses.map((c) => `<option value="${c.id}">${c.course_name}</option>`).join("");
+  document.getElementById("studentCourse").innerHTML = options;
+}
 
 async function getMyTeacherId() {
   if (myTeacherId) return myTeacherId;
@@ -108,7 +117,7 @@ function renderTable() {
     return `
       <tr>
         <td>${student.name}</td>
-        <td>${student.program}</td>
+        <td>${student.course_name || "_"}</td>
         <td>${student.semester}</td>
         <td>${scoreText}</td>
         <td>${categoryBadge}</td>
@@ -302,7 +311,7 @@ document.getElementById("addStudentForm").addEventListener("submit", async (e) =
   const body = {
     name: document.getElementById("studentName").value.trim(),
     email: document.getElementById("studentEmail").value.trim(),
-    program: document.getElementById("studentProgram").value.trim(),
+    course_id: document.getElementById("studentCourse").value,
     semester: Number(document.getElementById("studentSemester").value),
     teacher_id: teacherId,
     password: document.getElementById("studentPassword").value,
@@ -321,6 +330,7 @@ document.getElementById("addStudentForm").addEventListener("submit", async (e) =
   await loadStudentsAndScores();
 });
 
+loadCourses();
 loadStudentsAndScores();
 // ---------- Take Attendance ----------
 let attendanceState = {};
@@ -342,7 +352,7 @@ function renderAttendanceTable() {
     return `
       <tr>
         <td>${student.name}</td>
-        <td>${student.program}</td>
+        <td>${student.course_name || "—"}</td>
         <td>
           <div class="attendance-toggle" data-student-id="${student.id}">
             <button type="button" class="attendance-btn present ${status === "present" ? "active" : ""}" data-status="present">Present</button>

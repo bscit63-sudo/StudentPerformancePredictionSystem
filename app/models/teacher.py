@@ -6,6 +6,7 @@ class TeacherBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     email: EmailStr
     department: str = Field(..., max_length=100)
+    phone_number: str | None = None
 
 
 class TeacherCreate(TeacherBase):

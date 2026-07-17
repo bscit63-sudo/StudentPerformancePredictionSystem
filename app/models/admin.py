@@ -5,6 +5,7 @@ from pydantic import BaseModel, EmailStr, Field
 class AdminBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
+    phone_number: str | None = None
 
 
 class AdminCreate(AdminBase):
