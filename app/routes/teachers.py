@@ -100,12 +100,19 @@ async def delete_teacher(
 
 from app.models.auth_common import ChangePasswordRequest
 
-@router.get("/me/profile", response_model=TeacherOut)
+@router.get("/me/profile")
 async def get_my_teacher_profile(current_user: dict = Depends(require_role("teacher"))):
     teacher = await teachers_collection.find_one({"_id": ObjectId(current_user["user_id"])})
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher not found")
-    return serialize_document(teacher)
+
+    from app.database import courses_collection
+    my_courses = await courses_collection.find({"teacher_id": current_user["user_id"]}).to_list(length=None)
+    course_names = [c["course_name"] for c in my_courses]
+
+    profile = serialize_document(teacher)
+    profile["courses"] = course_names
+    return profile
 
 
 @router.put("/me/profile", response_model=TeacherOut)

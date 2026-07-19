@@ -52,12 +52,23 @@ async def create_student(
     return await _attach_course_name(serialize_document(created))
 
 
-@router.get("/me/profile", response_model=StudentOut)
+@router.get("/me/profile")
 async def get_my_profile(current_user: dict = Depends(require_role("student"))):
     student = await students_collection.find_one({"_id": ObjectId(current_user["user_id"])})
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
-    return await _attach_course_name(serialize_document(student))
+
+    profile = await _attach_course_name(serialize_document(student))
+
+    teacher_id = profile.get("teacher_id")
+    if teacher_id:
+        from app.database import teachers_collection
+        teacher = await teachers_collection.find_one({"_id": ObjectId(teacher_id)})
+        profile["teacher_name"] = teacher["name"] if teacher else None
+    else:
+        profile["teacher_name"] = None
+
+    return profile
 
 
 @router.get("/", response_model=list[StudentOut])

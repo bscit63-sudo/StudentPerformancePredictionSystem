@@ -198,9 +198,40 @@
 
       <!-- ===== My Profile ===== -->
       <section class="dashboard-section" id="section-profile">
-        <div class="panel">
+        <div class="profile-card" id="profileDisplayCard">
+          <div class="profile-header">
+            <div class="profile-avatar" id="profileAvatarInitial">T</div>
+            <div>
+              <h2 class="profile-name" id="profileDisplayName">—</h2>
+              <span class="profile-role-badge">Teacher</span>
+            </div>
+          </div>
+          <div class="profile-info-list">
+            <div class="profile-info-row">
+              <span class="profile-info-label">Email</span>
+              <span class="profile-info-value" id="profileDisplayEmail">—</span>
+            </div>
+            <div class="profile-info-row">
+              <span class="profile-info-label">Phone Number</span>
+              <span class="profile-info-value" id="profileDisplayPhone">—</span>
+            </div>
+            <div class="profile-info-row">
+              <span class="profile-info-label">Department</span>
+              <span class="profile-info-value" id="profileDisplayDept">—</span>
+            </div>
+            <div class="profile-info-row">
+              <span class="profile-info-label">Courses Taught</span>
+              <span class="profile-info-value" id="profileDisplayCourses">—</span>
+            </div>
+          </div>
+          <div class="profile-card-footer">
+            <button class="btn btn-ghost btn-sm" id="editProfileBtn">Edit Profile</button>
+          </div>
+        </div>
+
+        <div class="panel" id="profileEditPanel" style="display:none;">
           <div class="panel-header">
-            <h2 class="panel-title">Account details</h2>
+            <h2 class="panel-title">Edit account details</h2>
           </div>
           <form id="profileForm">
             <div class="profile-form-grid">
@@ -212,8 +243,15 @@
                 <label for="profileEmail">Email</label>
                 <input type="email" id="profileEmail" required>
               </div>
+              <div class="form-field">
+                <label for="profilePhone">Phone Number</label>
+                <input type="tel" id="profilePhone" placeholder="98XXXXXXXX">
+              </div>
             </div>
-            <button type="submit" class="btn btn-primary btn-sm" style="margin-top: 16px;">Save changes</button>
+            <div style="display:flex; gap: 10px; margin-top: 16px;">
+              <button type="submit" class="btn btn-primary btn-sm">Save changes</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="cancelEditBtn">Cancel</button>
+            </div>
           </form>
         </div>
 

@@ -25,6 +25,11 @@
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
         Overview
       </button>
+      <button class="sidebar-link" data-section="section-departments"
+              data-title="Departments" data-subtitle="Manage departments">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
+        Departments
+      </button>
       <button class="sidebar-link" data-section="section-teachers"
               data-title="Teachers" data-subtitle="Manage teacher accounts">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -151,16 +156,18 @@
               </div>
               <div class="form-field">
                 <label for="teacherDept">Department</label>
-                <input type="text" id="teacherDept" required>
+                <select id="teacherDept" required>
+                  <option value="">Select department</option>
+                </select>
               </div>
               <div class="form-field">
-  <label for="teacherPassword">Temporary password</label>
-  <input type="text" id="teacherPassword" required>
-</div>
-<div class="form-field">
-  <label for="teacherCourses">Courses taught (optional, select multiple)</label>
-  <select id="teacherCourses" multiple size="4"></select>
-</div>
+                <label for="teacherPassword">Temporary password</label>
+                <input type="text" id="teacherPassword" required>
+              </div>
+              <div class="form-field" style="grid-column: 1 / -1;">
+                <label>Courses taught (optional)</label>
+                <div class="checkbox-list" id="teacherCoursesChecklist"></div>
+              </div>
             </div>
             <button type="submit" class="btn btn-primary btn-sm">Add teacher</button>
           </form>
@@ -176,6 +183,38 @@
             </thead>
             <tbody id="teachersTableBody">
               <tr><td colspan="4" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== Departments ===== -->
+      <section class="dashboard-section" id="section-departments">
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Add a department</h2>
+          </div>
+          <form id="addDepartmentForm">
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="departmentName">Department name</label>
+                <input type="text" id="departmentName" placeholder="Information Technology" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Add department</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">All departments</h2>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Department name</th><th></th></tr>
+            </thead>
+            <tbody id="departmentsTableBody">
+              <tr><td colspan="2" class="empty-state">Loading...</td></tr>
             </tbody>
           </table>
         </div>
@@ -402,17 +441,39 @@
         </div>
         <div class="form-field">
           <label for="editTeacherDept">Department</label>
-          <input type="text" id="editTeacherDept" required>
+          <select id="editTeacherDept" required>
+            <option value="">Select department</option>
+          </select>
         </div>
-        <div class="form-field">
-          <label for="editTeacherCourses">Courses taught (select multiple)</label>
-          <select id="editTeacherCourses" multiple size="4"></select>
+        <div class="form-field" style="grid-column: 1 / -1;">
+          <label>Courses taught</label>
+          <div class="checkbox-list" id="editTeacherCoursesChecklist"></div>
         </div>
       </div>
       <button type="submit" class="btn btn-primary btn-block">Update teacher</button>
     </form>
   </div>
 </div>
+<!-- ===== Edit Department Modal ===== -->
+<div class="modal-overlay" id="editDepartmentModalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit department</h3>
+      <button class="modal-close" id="editDepartmentModalClose">✕</button>
+    </div>
+    <form id="editDepartmentForm">
+      <input type="hidden" id="editDepartmentId">
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="editDepartmentName">Department name</label>
+          <input type="text" id="editDepartmentName" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Update department</button>
+    </form>
+  </div>
+</div>
+
 
 <!-- ===== Edit Course Modal ===== -->
 <div class="modal-overlay" id="editCourseModalOverlay">

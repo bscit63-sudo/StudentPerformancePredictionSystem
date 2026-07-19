@@ -65,10 +65,22 @@ function populateTeacherSelects() {
   document.getElementById("editCourseTeacher").innerHTML = withNone;
 }
 
-function populateCourseMultiSelects() {
-  const options = allCourses.map((c) => `<option value="${c.id}">${c.course_name}</option>`).join("");
-  document.getElementById("teacherCourses").innerHTML = options;
-  document.getElementById("editTeacherCourses").innerHTML = options;
+function renderCourseChecklist(containerId, checkedCourseIds = []) {
+  const container = document.getElementById(containerId);
+  if (allCourses.length === 0) {
+    container.innerHTML = `<span class="checkbox-list-empty">No courses exist yet - add one in the Courses tab first.</span>`;
+    return;
+  }
+  container.innerHTML = allCourses.map((c) => `
+    <label class="checkbox-item">
+      <input type="checkbox" value="${c.id}" ${checkedCourseIds.includes(c.id) ? "checked" : ""}>
+      ${c.course_name}
+    </label>
+  `).join("");
+}
+
+function getCheckedCourseIds(containerId) {
+  return Array.from(document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`)).map((el) => el.value);
 }
 
 async function loadTeachers() {
@@ -141,7 +153,7 @@ async function loadCourses() {
   document.getElementById("studentCourse").innerHTML = courseOptions;
   document.getElementById("editStudentCourse").innerHTML = courseOptions;
 
-  populateCourseMultiSelects();
+  renderCourseChecklist("teacherCoursesChecklist");
 }
 
 document.getElementById("addCourseForm").addEventListener("submit", async (e) => {
@@ -214,6 +226,100 @@ async function deleteCourse(courseId) {
   await loadCourses();
 }
 
+// ---------- Departments ----------
+let allDepartments = [];
+
+async function loadDepartments() {
+  const res = await apiFetch("/departments/");
+  allDepartments = res && res.ok ? await res.json() : [];
+
+  const tbody = document.getElementById("departmentsTableBody");
+  if (allDepartments.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="2" class="empty-state">No departments yet. Add one above.</td></tr>`;
+  } else {
+    tbody.innerHTML = allDepartments.map((d) => `
+      <tr>
+        <td>${d.department_name}</td>
+        <td>
+          <button class="action-link" data-edit-department='${JSON.stringify(d)}'>Edit</button>
+          <button class="action-link danger" data-delete-department="${d.id}">Delete</button>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  document.querySelectorAll(".action-link[data-edit-department]").forEach((btn) => {
+    btn.addEventListener("click", () => openEditDepartmentModal(JSON.parse(btn.dataset.editDepartment)));
+  });
+  document.querySelectorAll(".action-link[data-delete-department]").forEach((btn) => {
+    btn.addEventListener("click", () => deleteDepartment(btn.dataset.deleteDepartment));
+  });
+
+  const options = `<option value="">Select department</option>` +
+    allDepartments.map((d) => `<option value="${d.department_name}">${d.department_name}</option>`).join("");
+  document.getElementById("teacherDept").innerHTML = options;
+  document.getElementById("editTeacherDept").innerHTML = options;
+}
+
+document.getElementById("addDepartmentForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const body = { department_name: document.getElementById("departmentName").value.trim() };
+  const res = await apiFetch("/departments/", { method: "POST", body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) {
+    showToast(data.detail || "Could not add department.", "error");
+    return;
+  }
+  showToast(`Department "${data.department_name}" added.`);
+  e.target.reset();
+  await loadDepartments();
+});
+
+const editDepartmentModalOverlay = document.getElementById("editDepartmentModalOverlay");
+const editDepartmentForm = document.getElementById("editDepartmentForm");
+
+function openEditDepartmentModal(department) {
+  document.getElementById("editDepartmentId").value = department.id;
+  document.getElementById("editDepartmentName").value = department.department_name;
+  editDepartmentModalOverlay.classList.add("open");
+}
+
+function closeEditDepartmentModal() {
+  editDepartmentModalOverlay.classList.remove("open");
+}
+
+document.getElementById("editDepartmentModalClose").addEventListener("click", closeEditDepartmentModal);
+editDepartmentModalOverlay.addEventListener("click", (e) => {
+  if (e.target === editDepartmentModalOverlay) closeEditDepartmentModal();
+});
+
+editDepartmentForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const departmentId = document.getElementById("editDepartmentId").value;
+  const body = { department_name: document.getElementById("editDepartmentName").value.trim() };
+  const res = await apiFetch(`/departments/${departmentId}`, { method: "PUT", body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) {
+    showToast(data.detail || "Could not update department.", "error");
+    return;
+  }
+  showToast("Department updated.");
+  closeEditDepartmentModal();
+  await loadDepartments();
+});
+
+async function deleteDepartment(departmentId) {
+  if (!confirm("Delete this department? This is blocked if any teachers are still assigned to it.")) return;
+
+  const res = await apiFetch(`/departments/${departmentId}`, { method: "DELETE" });
+  if (!res.ok) {
+    const data = await res.json();
+    showToast(data.detail || "Could not delete department.", "error");
+    return;
+  }
+  showToast("Department deleted.");
+  await loadDepartments();
+}
 // ---------- Students ----------
 async function loadStudents() {
   const res = await apiFetch("/students/");
@@ -526,6 +632,7 @@ document.getElementById("passwordForm").addEventListener("submit", async (e) => 
 });
 
 (async function init() {
+  await loadDepartments();
   await loadTeachers();
   await loadCourses();
   await loadStudents();

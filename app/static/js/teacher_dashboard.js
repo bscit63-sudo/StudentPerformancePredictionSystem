@@ -409,19 +409,60 @@ document.getElementById("saveAttendanceBtn").addEventListener("click", async () 
   showToast(`Attendance saved for ${data.students_marked} student(s).`);
 });
 // ---------- My Profile ----------
+let currentProfile = null;
+
+function renderProfileDisplay() {
+  if (!currentProfile) return;
+  document.getElementById("profileAvatarInitial").textContent = currentProfile.name.charAt(0).toUpperCase();
+  document.getElementById("profileDisplayName").textContent = currentProfile.name;
+  document.getElementById("profileDisplayEmail").textContent = currentProfile.email;
+  document.getElementById("profileDisplayDept").textContent = currentProfile.department || "—";
+
+  const phoneEl = document.getElementById("profileDisplayPhone");
+  if (currentProfile.phone_number) {
+    phoneEl.textContent = currentProfile.phone_number;
+    phoneEl.classList.remove("empty");
+  } else {
+    phoneEl.textContent = "Not provided";
+    phoneEl.classList.add("empty");
+  }
+
+  const coursesEl = document.getElementById("profileDisplayCourses");
+  if (currentProfile.courses && currentProfile.courses.length > 0) {
+    coursesEl.textContent = currentProfile.courses.join(", ");
+    coursesEl.classList.remove("empty");
+  } else {
+    coursesEl.textContent = "No courses assigned";
+    coursesEl.classList.add("empty");
+  }
+}
+
 async function loadMyProfile() {
   const res = await apiFetch("/teachers/me/profile");
   if (!res || !res.ok) return;
-  const teacher = await res.json();
-  document.getElementById("profileName").value = teacher.name;
-  document.getElementById("profileEmail").value = teacher.email;
+  currentProfile = await res.json();
+  renderProfileDisplay();
 }
+
+document.getElementById("editProfileBtn").addEventListener("click", () => {
+  document.getElementById("profileName").value = currentProfile.name;
+  document.getElementById("profileEmail").value = currentProfile.email;
+  document.getElementById("profilePhone").value = currentProfile.phone_number || "";
+  document.getElementById("profileDisplayCard").style.display = "none";
+  document.getElementById("profileEditPanel").style.display = "block";
+});
+
+document.getElementById("cancelEditBtn").addEventListener("click", () => {
+  document.getElementById("profileEditPanel").style.display = "none";
+  document.getElementById("profileDisplayCard").style.display = "block";
+});
 
 document.getElementById("profileForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const body = {
     name: document.getElementById("profileName").value.trim(),
     email: document.getElementById("profileEmail").value.trim(),
+    phone_number: document.getElementById("profilePhone").value.trim() || null,
   };
   const res = await apiFetch("/teachers/me/profile", { method: "PUT", body: JSON.stringify(body) });
   const data = await res.json();
@@ -429,7 +470,10 @@ document.getElementById("profileForm").addEventListener("submit", async (e) => {
     showToast(data.detail || "Could not update profile.", "error");
     return;
   }
+  await loadMyProfile();
   showToast("Profile updated.");
+  document.getElementById("profileEditPanel").style.display = "none";
+  document.getElementById("profileDisplayCard").style.display = "block";
 });
 
 document.getElementById("passwordForm").addEventListener("submit", async (e) => {
