@@ -20,6 +20,8 @@ from app.scoring import calculate_weighted_score, classify_score
 router = APIRouter(prefix="/records", tags=["performance-records"])
 
 
+from app.anomaly import detect_anomaly
+
 async def _recalculate_score(student_id: str, record: dict, record_id: str):
     """Shared helper: recompute and store the weighted score for a given record."""
     config = await weight_configs_collection.find_one(sort=[("last_updated", -1)])
@@ -39,7 +41,13 @@ async def _recalculate_score(student_id: str, record: dict, record_id: str):
     )
     category = classify_score(weighted_score)
 
-    # Remove any previous score tied to this exact record, then insert a fresh one
+    # Anomaly detection: compare against this student's OTHER past records
+    past_records = await performance_records_collection.find({
+        "student_id": student_id,
+        "_id": {"$ne": ObjectId(record_id)},
+    }).to_list(length=None)
+    is_flagged, flag_reason = detect_anomaly(record["exam_score"], past_records)
+
     await performance_scores_collection.delete_many({"record_id": record_id})
     score_doc = {
         "student_id": student_id,
@@ -48,6 +56,12 @@ async def _recalculate_score(student_id: str, record: dict, record_id: str):
         "weighted_score": weighted_score,
         "category": category.value,
         "calculated_date": datetime.utcnow(),
+        "is_flagged": is_flagged,
+        "flag_reason": flag_reason,
+        "evidence_file_path": None,
+        "approval_status": "pending" if is_flagged else None,
+        "approved_by": None,
+        "approved_at": None,
     }
     await performance_scores_collection.insert_one(score_doc)
 

@@ -9,12 +9,24 @@ class PerformanceCategory(str, Enum):
     AT_RISK = "At-Risk"
 
 
+class ApprovalStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
 class PerformanceScoreBase(BaseModel):
     student_id: str
     record_id: str
     config_id: str
     weighted_score: float = Field(..., ge=0, le=100)
     category: PerformanceCategory
+    is_flagged: bool = False
+    flag_reason: str | None = None
+    evidence_file_path: str | None = None
+    approval_status: ApprovalStatus | None = None
+    approved_by: str | None = None
+    approved_at: datetime | None = None
 
 
 class PerformanceScoreCreate(PerformanceScoreBase):
