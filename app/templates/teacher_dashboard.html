@@ -36,6 +36,12 @@
   <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
   Take Attendance
 </button>
+<button class="sidebar-link" data-section="section-flagged"
+        data-title="Flagged Cases" data-subtitle="Review anomalous exam results">
+  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+  Flagged Cases
+  <span class="badge-count" id="flaggedCountBadge" style="display:none;">0</span>
+</button>
 <button class="sidebar-link" data-section="section-profile"
         data-title="My Profile" data-subtitle="Update your account details">
   <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
@@ -274,6 +280,25 @@
           </form>
         </div>
       </section>
+            </section>
+
+      <!-- ===== Flagged Cases ===== -->
+      <section class="dashboard-section" id="section-flagged">
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Flagged cases pending review</h2>
+          </div>
+          <p class="page-subtitle" style="margin-bottom: 18px;">
+            These students have a strong attendance/assignment baseline but an exam score
+            significantly below it. Review the case and approve or reject special consideration.
+          </p>
+          <div id="flaggedCasesList"></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
 
     </div>
   </div>
@@ -343,6 +368,6 @@
 
 <script src="/static/js/theme.js"></script>
 <script src="/static/js/dashboard-common.js"></script>
-<script src="/static/js/teacher_dashboard.js"></script>
+<script src="/static/js/teacher_dashboard.js?v=2"></script>
 </body>
 </html>

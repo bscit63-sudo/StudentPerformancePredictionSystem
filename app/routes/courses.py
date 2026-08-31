@@ -24,11 +24,10 @@ async def create_course(
 
 @router.get("/", response_model=list[CourseOut])
 async def list_courses(current_user: dict = Depends(require_role("admin", "teacher"))):
-    """Admins see all courses; teachers only see courses assigned to them."""
-    if current_user["role"] == "teacher":
-        courses = await courses_collection.find({"teacher_id": current_user["user_id"]}).to_list(length=None)
-    else:
-        courses = await courses_collection.find().to_list(length=None)
+    """Both admins and teachers see all courses (needed for course-aware
+    student enrollment; a teacher may enroll a student in any course,
+    not just ones they personally teach)."""
+    courses = await courses_collection.find().to_list(length=None)
     return serialize_documents(courses)
 
 

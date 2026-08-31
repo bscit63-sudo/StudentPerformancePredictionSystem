@@ -5,14 +5,6 @@ let myTeacherId = null;
 let currentHistoryStudent = { id: null, name: null };
 let myCourses = [];
 
-async function loadCourses() {
-  const res = await apiFetch("/courses/");
-  myCourses = res && res.ok ? await res.json() : [];
-  const options = `<option value="">Select a course</option>` +
-    myCourses.map((c) => `<option value="${c.id}">${c.course_name}</option>`).join("");
-  document.getElementById("studentCourse").innerHTML = options;
-}
-
 async function getMyTeacherId() {
   if (myTeacherId) return myTeacherId;
   const res = await apiFetch("/auth/me");
@@ -28,6 +20,16 @@ function badgeClassFor(category) {
   return "";
 }
 
+// ---------- Courses ----------
+async function loadCourses() {
+  const res = await apiFetch("/courses/");
+  myCourses = res && res.ok ? await res.json() : [];
+  const options = `<option value="">Select a course</option>` +
+    myCourses.map((c) => `<option value="${c.id}">${c.course_name}</option>`).join("");
+  document.getElementById("studentCourse").innerHTML = options;
+}
+
+// ---------- Students & Scores ----------
 async function loadStudentsAndScores() {
   const [studentsRes, scoresRes] = await Promise.all([
     apiFetch("/students/"),
@@ -49,13 +51,6 @@ async function loadStudentsAndScores() {
   renderStats();
   renderChart();
 }
-document.getElementById("exportSummaryBtn").addEventListener("click", () => {
-  downloadCSV("/reports/summary.csv", "my_students_summary.csv");
-});
-
-document.getElementById("exportFullBtn").addEventListener("click", () => {
-  downloadCSV("/reports/full.csv", "my_students_full.csv");
-});
 
 function renderStats() {
   document.getElementById("statStudents").textContent = myStudents.length;
@@ -117,7 +112,7 @@ function renderTable() {
     return `
       <tr>
         <td>${student.name}</td>
-        <td>${student.course_name || "_"}</td>
+        <td>${student.course_name || "—"}</td>
         <td>${student.semester}</td>
         <td>${scoreText}</td>
         <td>${categoryBadge}</td>
@@ -207,6 +202,7 @@ recordForm.addEventListener("submit", async (e) => {
   showToast(editingId ? "Record updated." : "Record saved and score calculated.");
   closeRecordModal();
   await loadStudentsAndScores();
+  await loadFlaggedCases();
 
   if (currentHistoryStudent.id === body.student_id) {
     await openHistoryModal(currentHistoryStudent.id, currentHistoryStudent.name);
@@ -330,8 +326,6 @@ document.getElementById("addStudentForm").addEventListener("submit", async (e) =
   await loadStudentsAndScores();
 });
 
-loadCourses();
-loadStudentsAndScores();
 // ---------- Take Attendance ----------
 let attendanceState = {};
 
@@ -374,40 +368,173 @@ function renderAttendanceTable() {
   });
 }
 
-document.getElementById("attendanceDate").value = todayISO();
+const attendanceDateInput = document.getElementById("attendanceDate");
+if (attendanceDateInput) attendanceDateInput.value = todayISO();
 
-document.querySelector("[data-section='section-attendance']").addEventListener("click", () => {
-  myStudents.forEach((s) => {
-    if (!attendanceState[s.id]) attendanceState[s.id] = "present";
+const attendanceSidebarLink = document.querySelector("[data-section='section-attendance']");
+if (attendanceSidebarLink) {
+  attendanceSidebarLink.addEventListener("click", () => {
+    myStudents.forEach((s) => {
+      if (!attendanceState[s.id]) attendanceState[s.id] = "present";
+    });
+    renderAttendanceTable();
   });
-  renderAttendanceTable();
-});
+}
 
-document.getElementById("saveAttendanceBtn").addEventListener("click", async () => {
-  const date = document.getElementById("attendanceDate").value;
-  if (!date) {
-    showToast("Pick a date first.", "error");
+const saveAttendanceBtn = document.getElementById("saveAttendanceBtn");
+if (saveAttendanceBtn) {
+  saveAttendanceBtn.addEventListener("click", async () => {
+    const date = document.getElementById("attendanceDate").value;
+    if (!date) {
+      showToast("Pick a date first.", "error");
+      return;
+    }
+
+    const entries = myStudents.map((s) => ({
+      student_id: s.id,
+      status: attendanceState[s.id] || "present",
+    }));
+
+    const res = await apiFetch("/attendance/mark", {
+      method: "POST",
+      body: JSON.stringify({ date, entries }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(data.detail || "Could not save attendance.", "error");
+      return;
+    }
+
+    showToast(`Attendance saved for ${data.students_marked} student(s).`);
+  });
+}
+
+// ---------- Flagged Cases ----------
+async function loadFlaggedCases() {
+  const res = await apiFetch("/reviews/flagged");
+  const cases = res && res.ok ? await res.json() : [];
+
+  const badge = document.getElementById("flaggedCountBadge");
+  if (badge) {
+    if (cases.length > 0) {
+      badge.textContent = cases.length;
+      badge.style.display = "inline-block";
+    } else {
+      badge.style.display = "none";
+    }
+  }
+
+  const container = document.getElementById("flaggedCasesList");
+  if (!container) return;
+
+  if (cases.length === 0) {
+    container.innerHTML = `<p class="empty-state">No flagged cases right now.</p>`;
     return;
   }
 
-  const entries = myStudents.map((s) => ({
-    student_id: s.id,
-    status: attendanceState[s.id] || "present",
-  }));
+  container.innerHTML = cases.map((c) => `
+    <div class="flagged-case-card">
+      <div class="flagged-case-header">
+        <span class="flagged-case-student">${c.student_name}</span>
+        <span class="badge badge-coral">Pending Review</span>
+      </div>
+      <div class="flagged-case-reason">${c.flag_reason}</div>
+      <div class="flagged-case-actions">
+        ${c.evidence_file_path ? `<button class="btn btn-ghost btn-sm" data-view-evidence="${c.id}">View Evidence</button>` : ""}
+        <input type="file" id="evidence-${c.id}" accept=".pdf,.jpg,.jpeg,.png" style="font-size: 12px;">
+        <button class="btn btn-ghost btn-sm" data-upload-evidence="${c.id}">Upload Evidence</button>
+        <label>
+          <input type="checkbox" id="grace-${c.id}"> Apply grace recalculation (use class median)
+        </label>
+        <button class="btn btn-primary btn-sm" data-approve="${c.id}">Approve</button>
+        <button class="action-link danger" data-reject="${c.id}">Reject</button>
+      </div>
+    </div>
+  `).join("");
 
-  const res = await apiFetch("/attendance/mark", {
+  document.querySelectorAll("[data-upload-evidence]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const caseId = btn.dataset.uploadEvidence;
+      const fileInput = document.getElementById(`evidence-${caseId}`);
+      if (!fileInput.files.length) {
+        showToast("Choose a file first.", "error");
+        return;
+      }
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      const res = await fetch(`/reviews/${caseId}/evidence`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${SPPS_TOKEN}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.detail || "Could not upload evidence.", "error");
+        return;
+      }
+      showToast("Evidence uploaded.");
+      await loadFlaggedCases();
+    });
+  });
+
+  document.querySelectorAll("[data-view-evidence]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const caseId = btn.dataset.viewEvidence;
+
+      const res = await fetch(`/reviews/${caseId}/evidence`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${SPPS_TOKEN}` },
+      });
+
+      if (!res.ok) {
+        let message = "Could not load evidence file.";
+        try {
+          const data = await res.json();
+          message = data.detail || message;
+        } catch (err) {
+          // response wasn't JSON (e.g. raw file stream on failure) — keep default message
+        }
+        showToast(message, "error");
+        return;
+      }
+
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, "_blank");
+      // Release the blob URL after giving the new tab time to load it
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+    });
+  });
+
+  document.querySelectorAll("[data-approve]").forEach((btn) => {
+    btn.addEventListener("click", () => decideFlaggedCase(btn.dataset.approve, "approved"));
+  });
+
+  document.querySelectorAll("[data-reject]").forEach((btn) => {
+    btn.addEventListener("click", () => decideFlaggedCase(btn.dataset.reject, "rejected"));
+  });
+}
+
+async function decideFlaggedCase(caseId, decision) {
+  const graceCheckbox = document.getElementById(`grace-${caseId}`);
+  const applyGrace = decision === "approved" && graceCheckbox && graceCheckbox.checked;
+
+  const res = await apiFetch(`/reviews/${caseId}/decision`, {
     method: "POST",
-    body: JSON.stringify({ date, entries }),
+    body: JSON.stringify({ decision, apply_grace_recalculation: applyGrace }),
   });
   const data = await res.json();
-
   if (!res.ok) {
-    showToast(data.detail || "Could not save attendance.", "error");
+    showToast(data.detail || "Could not process decision.", "error");
     return;
   }
+  showToast(`Case ${decision}.`);
+  await loadFlaggedCases();
+  await loadStudentsAndScores();
+}
 
-  showToast(`Attendance saved for ${data.students_marked} student(s).`);
-});
 // ---------- My Profile ----------
 let currentProfile = null;
 
@@ -492,4 +619,25 @@ document.getElementById("passwordForm").addEventListener("submit", async (e) => 
   e.target.reset();
 });
 
-loadMyProfile();
+// ---------- Reports ----------
+const exportSummaryBtn = document.getElementById("exportSummaryBtn");
+if (exportSummaryBtn) {
+  exportSummaryBtn.addEventListener("click", () => {
+    downloadCSV("/reports/summary.csv", "my_students_summary.csv");
+  });
+}
+
+const exportFullBtn = document.getElementById("exportFullBtn");
+if (exportFullBtn) {
+  exportFullBtn.addEventListener("click", () => {
+    downloadCSV("/reports/full.csv", "my_students_full.csv");
+  });
+}
+
+// ---------- Init ----------
+(async function init() {
+  await loadCourses();
+  await loadStudentsAndScores();
+  await loadFlaggedCases();
+  await loadMyProfile();
+})();

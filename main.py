@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import ping_database
-from app.routes import auth, teachers, students, weight_configs, performance_records, performance_scores, reports, attendance, courses, departments
+from app.routes import auth, teachers, students, weight_configs, performance_records, performance_scores, reports, attendance, courses, departments, reviews
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     connected = await ping_database()
@@ -52,6 +52,7 @@ app.include_router(reports.router)
 app.include_router(attendance.router)
 app.include_router(courses.router)
 app.include_router(departments.router)
+app.include_router(reviews.router)
 
 @app.get("/health")
 async def health_check():
