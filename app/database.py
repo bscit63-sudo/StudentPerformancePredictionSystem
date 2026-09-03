@@ -21,3 +21,17 @@ async def ping_database() -> bool:
     except Exception as exc:
         print(f"[database] Could not connect to MongoDB: {exc}")
         return False
+
+
+async def ensure_indexes() -> None:
+    """
+    Create indexes for the fields we filter on most often.
+    Without these, every lookup (e.g. 'History' by student_id) is a full
+    collection scan, which gets slower as records/scores grow.
+    Safe to call on every startup - Mongo no-ops if the index already exists.
+    """
+    await performance_records_collection.create_index("student_id")
+    await performance_scores_collection.create_index("student_id")
+    await performance_scores_collection.create_index("record_id")
+    await students_collection.create_index("teacher_id")
+    await attendance_logs_collection.create_index("student_id")

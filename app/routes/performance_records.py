@@ -86,13 +86,13 @@ async def create_performance_record(
         raise HTTPException(status_code=403, detail="You can only add records for your own students")
 
     record_doc = {
-        "student_id": record.student_id,
-        "attendance_percent": record.attendance_percent,
-        "assignment_score": record.assignment_score,
-        "exam_score": record.exam_score,
-        "semester": record.semester,
-        "date_recorded": datetime.utcnow(),
-    }
+    "student_id": record.student_id,
+    "attendance_percent": record.attendance_percent,
+    "assignment_score": record.assignment_score,
+    "exam_score": record.exam_score,
+    "semester": record.semester or f"Semester {student.get('semester', '—')}",
+    "date_recorded": datetime.utcnow(),
+}
     result = await performance_records_collection.insert_one(record_doc)
     created_record = await performance_records_collection.find_one({"_id": result.inserted_id})
 

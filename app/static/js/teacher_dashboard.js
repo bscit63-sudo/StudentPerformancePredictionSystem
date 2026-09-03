@@ -160,7 +160,7 @@ function openEditRecordModal(record, studentName) {
   document.getElementById("recordAttendance").value = record.attendance_percent;
   document.getElementById("recordAssignment").value = record.assignment_score;
   document.getElementById("recordExam").value = record.exam_score;
-  document.getElementById("recordSemester").value = record.semester;
+  
   document.getElementById("modalStudentName").textContent = `For: ${studentName}`;
   recordModalTitle.textContent = "Edit performance record";
   recordSubmitBtn.textContent = "Update record";
@@ -185,7 +185,7 @@ recordForm.addEventListener("submit", async (e) => {
     attendance_percent: Number(document.getElementById("recordAttendance").value),
     assignment_score: Number(document.getElementById("recordAssignment").value),
     exam_score: Number(document.getElementById("recordExam").value),
-    semester: document.getElementById("recordSemester").value.trim(),
+    
   };
 
   const url = editingId ? `/records/${editingId}` : "/records/";
@@ -248,8 +248,8 @@ async function openHistoryModal(studentId, studentName) {
         <td>${badge}</td>
         <td>${date}</td>
         <td>
-          <button class="action-link" data-edit-record='${JSON.stringify(r)}'>Edit</button>
-          <button class="action-link danger" data-delete-record="${r.id}">Delete</button>
+          <button class="action-icon-btn" data-edit-record='${JSON.stringify(r)}' title="Edit" aria-label="Edit record">${ICON_EDIT}</button>
+          <button class="action-icon-btn danger" data-delete-record="${r.id}" title="Delete" aria-label="Delete record">${ICON_DELETE}</button>
         </td>
       </tr>
     `;
@@ -259,7 +259,7 @@ async function openHistoryModal(studentId, studentName) {
     ? rows.join("")
     : `<tr><td colspan="6" class="empty-state">No records yet for this student.</td></tr>`;
 
-  document.querySelectorAll(".action-link[data-edit-record]").forEach((btn) => {
+  document.querySelectorAll(".action-icon-btn[data-edit-record]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const record = JSON.parse(btn.dataset.editRecord);
       closeHistoryModal();
@@ -267,7 +267,7 @@ async function openHistoryModal(studentId, studentName) {
     });
   });
 
-  document.querySelectorAll(".action-link[data-delete-record]").forEach((btn) => {
+  document.querySelectorAll(".action-icon-btn[data-delete-record]").forEach((btn) => {
     btn.addEventListener("click", () => deleteRecord(btn.dataset.deleteRecord));
   });
 }

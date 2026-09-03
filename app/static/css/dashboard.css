@@ -397,6 +397,22 @@
   border-radius: var(--radius-sm);
 }
 .action-link:hover { background: var(--primary-soft); }
+
+.action-icon-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  vertical-align: middle;
+}
+.action-icon-btn svg { width: 16px; height: 16px; }
+.action-icon-btn:hover { background: var(--primary-soft); color: var(--primary); }
+.action-icon-btn.danger:hover { background: color-mix(in srgb, var(--accent-coral) 12%, transparent); color: var(--accent-coral); }
 /* ---------- Student status card ---------- */
 .status-hero {
   display: grid;

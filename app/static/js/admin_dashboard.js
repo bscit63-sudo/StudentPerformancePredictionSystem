@@ -99,17 +99,17 @@ async function loadTeachers() {
         <td>${t.email}</td>
         <td>${t.department}</td>
         <td>
-          <button class="action-link" data-edit-teacher='${JSON.stringify(t)}'>Edit</button>
-          <button class="action-link danger" data-delete-teacher="${t.id}">Delete</button>
+          <button class="action-icon-btn" data-edit-teacher='${JSON.stringify(t)}' title="Edit" aria-label="Edit">${ICON_EDIT}</button>
+          <button class="action-icon-btn danger" data-delete-teacher="${t.id}" title="Delete" aria-label="Delete">${ICON_DELETE}</button>
         </td>
       </tr>
     `).join("");
   }
 
-  document.querySelectorAll(".action-link[data-edit-teacher]").forEach((btn) => {
+  document.querySelectorAll(".action-icon-btn[data-edit-teacher]").forEach((btn) => {
     btn.addEventListener("click", () => openEditTeacherModal(JSON.parse(btn.dataset.editTeacher)));
   });
-  document.querySelectorAll(".action-link[data-delete-teacher]").forEach((btn) => {
+  document.querySelectorAll(".action-icon-btn[data-delete-teacher]").forEach((btn) => {
     btn.addEventListener("click", () => deleteTeacher(btn.dataset.deleteTeacher));
   });
 
@@ -133,18 +133,18 @@ async function loadCourses() {
           <td>${c.course_code || "—"}</td>
           <td>${teacher ? teacher.name : "Unassigned"}</td>
           <td>
-            <button class="action-link" data-edit-course='${JSON.stringify(c)}'>Edit</button>
-            <button class="action-link danger" data-delete-course="${c.id}">Delete</button>
+            <button class="action-icon-btn" data-edit-course='${JSON.stringify(c)}' title="Edit" aria-label="Edit">${ICON_EDIT}</button>
+            <button class="action-icon-btn danger" data-delete-course="${c.id}" title="Delete" aria-label="Delete">${ICON_DELETE}</button>
           </td>
         </tr>
       `;
     }).join("");
   }
 
-  document.querySelectorAll(".action-link[data-edit-course]").forEach((btn) => {
+  document.querySelectorAll(".action-icon-btn[data-edit-course]").forEach((btn) => {
     btn.addEventListener("click", () => openEditCourseModal(JSON.parse(btn.dataset.editCourse)));
   });
-  document.querySelectorAll(".action-link[data-delete-course]").forEach((btn) => {
+  document.querySelectorAll(".action-icon-btn[data-delete-course]").forEach((btn) => {
     btn.addEventListener("click", () => deleteCourse(btn.dataset.deleteCourse));
   });
 
@@ -241,17 +241,17 @@ async function loadDepartments() {
       <tr>
         <td>${d.department_name}</td>
         <td>
-          <button class="action-link" data-edit-department='${JSON.stringify(d)}'>Edit</button>
-          <button class="action-link danger" data-delete-department="${d.id}">Delete</button>
+          <button class="action-icon-btn" data-edit-department='${JSON.stringify(d)}' title="Edit" aria-label="Edit">${ICON_EDIT}</button>
+          <button class="action-icon-btn danger" data-delete-department="${d.id}" title="Delete" aria-label="Delete">${ICON_DELETE}</button>
         </td>
       </tr>
     `).join("");
   }
 
-  document.querySelectorAll(".action-link[data-edit-department]").forEach((btn) => {
+  document.querySelectorAll(".action-icon-btn[data-edit-department]").forEach((btn) => {
     btn.addEventListener("click", () => openEditDepartmentModal(JSON.parse(btn.dataset.editDepartment)));
   });
-  document.querySelectorAll(".action-link[data-delete-department]").forEach((btn) => {
+  document.querySelectorAll(".action-icon-btn[data-delete-department]").forEach((btn) => {
     btn.addEventListener("click", () => deleteDepartment(btn.dataset.deleteDepartment));
   });
 
@@ -338,17 +338,17 @@ async function loadStudents() {
         <td>${s.semester}</td>
         <td>${s.email}</td>
         <td>
-          <button class="action-link" data-edit-student='${JSON.stringify(s)}'>Edit</button>
-          <button class="action-link danger" data-delete-student="${s.id}">Delete</button>
+          <button class="action-icon-btn" data-edit-student='${JSON.stringify(s)}' title="Edit" aria-label="Edit">${ICON_EDIT}</button>
+          <button class="action-icon-btn danger" data-delete-student="${s.id}" title="Delete" aria-label="Delete">${ICON_DELETE}</button>
         </td>
       </tr>
     `).join("");
   }
 
-  document.querySelectorAll(".action-link[data-edit-student]").forEach((btn) => {
+  document.querySelectorAll(".action-icon-btn[data-edit-student]").forEach((btn) => {
     btn.addEventListener("click", () => openEditStudentModal(JSON.parse(btn.dataset.editStudent)));
   });
-  document.querySelectorAll(".action-link[data-delete-student]").forEach((btn) => {
+  document.querySelectorAll(".action-icon-btn[data-delete-student]").forEach((btn) => {
     btn.addEventListener("click", () => deleteStudent(btn.dataset.deleteStudent));
   });
 }

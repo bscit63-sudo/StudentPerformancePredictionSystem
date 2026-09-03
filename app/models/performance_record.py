@@ -7,7 +7,7 @@ class PerformanceRecordBase(BaseModel):
     attendance_percent: float = Field(..., ge=0, le=100)
     assignment_score: float = Field(..., ge=0, le=100)
     exam_score: float = Field(..., ge=0, le=100)
-    semester: str = Field(..., max_length=20)
+    semester: str | None = Field(None, max_length=20)
 
 
 class PerformanceRecordCreate(PerformanceRecordBase):
